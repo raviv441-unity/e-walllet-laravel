@@ -42,15 +42,15 @@ class WalletController extends Controller
      * @return \Illuminate\Http\Response JSON
      */
     public function listUsers(Request $request)
-    {
-        $query = User::selectRaw('`id`, CONCAT(`name`," (",`email`,")") as text');
-
-        if ($request->term) {
-            $query->where('name', 'like', '%' . $request->term . '%');
-            $query->where('email', 'like', '%' . $request->term . '%');
-        }
+    {   
+        $query = User::selectRaw('`id`, CONCAT(`name`," (",`email`,")") as text')->where(function($subQuery) use($request){
+            if ($request->term) {
+                $subQuery->where('name', 'like', '%' . $request->term . '%')->orWhere('email', 'like', '%' . $request->term . '%');
+            }
+        })->where('users.id','<>',Auth::user()->id);        
 
         $users     = $query->orderBy('name', 'ASC')->get();
+
         $data['results'] = $users;
 
         return $data;
